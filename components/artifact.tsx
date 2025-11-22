@@ -12,8 +12,6 @@ import {
 } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { useDebounceCallback } from "usehooks-ts";
-import { imageArtifact } from "@/artifacts/image/client";
-import { sheetArtifact } from "@/artifacts/sheet/client";
 import { textArtifact } from "@/artifacts/text/client";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { Document, Vote } from "@/lib/db/schema";
@@ -29,8 +27,6 @@ import type { VisibilityType } from "./visibility-selector";
 
 export const artifactDefinitions = [
   textArtifact,
-  imageArtifact,
-  sheetArtifact,
 ];
 export type ArtifactKind = (typeof artifactDefinitions)[number]["kind"];
 

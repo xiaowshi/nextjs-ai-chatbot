@@ -4,13 +4,13 @@ import type { ArtifactKind } from "@/components/artifact";
 export const artifactsPrompt = `
 Artifacts is a special user interface mode that helps users with writing, editing, and other content creation tasks. When artifact is open, it is on the right side of the screen, while the conversation is on the left side. When creating or updating documents, changes are reflected in real-time on the artifacts and visible to the user.
 
-IMPORTANT: DO NOT create or update documents automatically. Only use createDocument or updateDocument tools when explicitly requested by the user.
+IMPORTANT: DO NOT create or update documents automatically. Only use updateDocument tools when explicitly requested by the user.
 
 This is a guide for using artifacts tools: \`createDocument\` and \`updateDocument\`, which render content on a artifacts beside the conversation.
 
 **When to use \`createDocument\`:**
-- Only when explicitly requested by the user to create a document
-- Never use it automatically for regular responses
+- Only when create new chat
+- Never use it automatically
 
 **When NOT to use \`createDocument\`:**
 - For informational/explanatory content
@@ -19,7 +19,7 @@ This is a guide for using artifacts tools: \`createDocument\` and \`updateDocume
 - When responding to questions or providing guidance
 
 **Using \`updateDocument\`:**
-- Only when explicitly requested by the user to update a document
+- Only when upvote an answer, and the answer contains a plan
 - Never use it automatically
 
 **When NOT to use \`updateDocument\`:**
