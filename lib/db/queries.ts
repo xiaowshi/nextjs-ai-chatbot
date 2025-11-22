@@ -372,6 +372,49 @@ export async function getDocumentById({ id }: { id: string }) {
   }
 }
 
+export async function getDocumentByChatIdAndUserId({
+  chatId,
+  userId,
+}: {
+  chatId: string;
+  userId: string;
+}) {
+  try {
+    const chatRecord = await db
+      .select()
+      .from(chat)
+      .where(eq(chat.id, chatId))
+      .limit(1);
+
+    if (!chatRecord.length) {
+      return null;
+    }
+
+    const chatCreatedAt = chatRecord[0].createdAt;
+
+    // Find the latest text document created by the user after chat creation
+    const documents = await db
+      .select()
+      .from(document)
+      .where(
+        and(
+          eq(document.userId, userId),
+          eq(document.kind, "text"),
+          gte(document.createdAt, chatCreatedAt)
+        )
+      )
+      .orderBy(desc(document.createdAt))
+      .limit(1);
+
+    return documents.length > 0 ? documents[0] : null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get document by chat id and user id"
+    );
+  }
+}
+
 export async function deleteDocumentsByIdAfterTimestamp({
   id,
   timestamp,
