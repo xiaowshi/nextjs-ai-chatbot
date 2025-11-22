@@ -8,9 +8,9 @@ export const initialArtifactData: UIArtifact = {
   documentId: "init",
   content: "",
   kind: "text",
-  title: "",
+  title: "7-Habit Todo List",
   status: "idle",
-  isVisible: false,
+  isVisible: true,
   boundingBox: {
     top: 0,
     left: 0,

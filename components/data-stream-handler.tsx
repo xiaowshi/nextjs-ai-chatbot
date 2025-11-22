@@ -57,6 +57,7 @@ export function DataStreamHandler() {
               ...draftArtifact,
               kind: delta.data,
               status: "streaming",
+              isVisible: true,
             };
 
           case "data-clear":
