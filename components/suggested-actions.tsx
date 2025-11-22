@@ -15,10 +15,9 @@ type SuggestedActionsProps = {
 
 function PureSuggestedActions({ chatId, sendMessage }: SuggestedActionsProps) {
   const suggestedActions = [
-    "What are the advantages of using Next.js?",
-    "Write code to demonstrate Dijkstra's algorithm",
-    "Help me write an essay about Silicon Valley",
-    "What is the weather in San Francisco?",
+    "中层市场经理，单身，喜欢我目前所在的城市。 擅长战略思维、较强的沟通能力、适应能力。 搬迁积蓄有限，希望实现工作与生活的平衡。 内向、分析型人格。",
+    "10人软件开发团队的团队负责人。技术专长、问题解决能力、同理心。项目工期紧张，新工具预算有限。外向、有创造力。",
+    "独立顾问和教育工作者。内容创作、教学设计、市场营销。客户日程已满，初始投资资金有限。创造型、分析型。4个月内启动试点项目，8个月内完成全部课程。",
   ];
 
   return (

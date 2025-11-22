@@ -18,7 +18,6 @@ import type { Document, Vote } from "@/lib/db/schema";
 import type { Attachment, ChatMessage } from "@/lib/types";
 import { fetcher } from "@/lib/utils";
 import { ArtifactActions } from "./artifact-actions";
-import { ArtifactCloseButton } from "./artifact-close-button";
 import { ArtifactMessages } from "./artifact-messages";
 import { MultimodalInput } from "./multimodal-input";
 import { Toolbar } from "./toolbar";
@@ -257,10 +256,8 @@ function PureArtifact({
     >
       <div className="flex flex-row items-start justify-between p-2">
         <div className="flex flex-row items-start gap-4">
-          <ArtifactCloseButton />
-
           <div className="flex flex-col">
-            <div className="font-medium">{artifact.title || "文档"}</div>
+            <div className="font-medium">{artifact.title || "7-Habit Todo List"}</div>
 
             {isContentDirty ? (
               <div className="text-muted-foreground text-sm">

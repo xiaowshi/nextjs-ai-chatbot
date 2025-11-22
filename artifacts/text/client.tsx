@@ -11,11 +11,13 @@ import {
   UndoIcon,
 } from "@/components/icons";
 import { Editor } from "@/components/text-editor";
+import { TodoList } from "@/components/todo-list";
 import type { Suggestion } from "@/lib/db/schema";
 import { getSuggestions } from "../actions";
 
 type TextArtifactMetadata = {
   suggestions: Suggestion[];
+  completedTodos?: Set<string>;
 };
 
 export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
@@ -26,6 +28,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
 
     setMetadata({
       suggestions,
+      completedTodos: new Set<string>(),
     });
   },
   onStreamPart: ({ streamPart, setMetadata, setArtifact }) => {
@@ -63,6 +66,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     getDocumentContentById,
     isLoading,
     metadata,
+    setMetadata,
   }) => {
     if (isLoading) {
       return <DocumentSkeleton artifactKind="text" />;
@@ -75,20 +79,30 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
       return <DiffView newContent={newContent} oldContent={oldContent} />;
     }
 
-    return (
-      <div className="flex flex-row px-4 py-8 md:p-20">
-        <Editor
-          content={content}
-          currentVersionIndex={currentVersionIndex}
-          isCurrentVersion={isCurrentVersion}
-          onSaveContent={onSaveContent}
-          status={status}
-          suggestions={metadata ? metadata.suggestions : []}
-        />
+    const handleToggleTodo = (id: string, completed: boolean) => {
+      if (setMetadata) {
+        setMetadata((current) => {
+          const completedTodos = new Set(current?.completedTodos || []);
+          if (completed) {
+            completedTodos.add(id);
+          } else {
+            completedTodos.delete(id);
+          }
+          return {
+            ...current,
+            completedTodos,
+          };
+        });
+      }
+    };
 
-        {metadata?.suggestions && metadata.suggestions.length > 0 ? (
-          <div className="h-dvh w-12 shrink-0 md:hidden" />
-        ) : null}
+    return (
+      <div className="flex h-full flex-col">
+        <TodoList
+          content={content}
+          completedItems={metadata?.completedTodos}
+          onToggleItem={handleToggleTodo}
+        />
       </div>
     );
   },
