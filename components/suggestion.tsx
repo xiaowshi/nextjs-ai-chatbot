@@ -60,10 +60,7 @@ export const Suggestion = ({
         </motion.div>
       ) : (
         <motion.div
-          className={cn("cursor-pointer p-1 text-muted-foreground", {
-            "-right-8 absolute": artifactKind === "text",
-            "sticky top-0 right-4": artifactKind === "code",
-          })}
+          className="cursor-pointer -right-8 absolute p-1 text-muted-foreground"
           onClick={() => {
             setIsExpanded(true);
           }}
