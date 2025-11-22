@@ -79,6 +79,27 @@ function PureArtifact({
 }) {
   const { artifact, setArtifact, metadata, setMetadata } = useArtifact();
 
+  // Fetch document by chatId if documentId is "init"
+  const { data: documentByChat } = useSWR<Document>(
+    artifact.documentId === "init" && chatId
+      ? `/api/document/by-chat?chatId=${chatId}`
+      : null,
+    fetcher
+  );
+
+  // Set documentId when document is found
+  useEffect(() => {
+    if (documentByChat && artifact.documentId === "init") {
+      setArtifact((currentArtifact) => ({
+        ...currentArtifact,
+        documentId: documentByChat.id,
+        title: documentByChat.title,
+        kind: documentByChat.kind,
+        content: documentByChat.content ?? "",
+      }));
+    }
+  }, [documentByChat, artifact.documentId, setArtifact]);
+
   const {
     data: documents,
     isLoading: isDocumentsFetching,
@@ -113,6 +134,13 @@ function PureArtifact({
   useEffect(() => {
     mutateDocuments();
   }, [mutateDocuments]);
+
+  // Refresh documents when votes change (after upvote)
+  useEffect(() => {
+    if (artifact.documentId !== "init") {
+      mutateDocuments();
+    }
+  }, [votes, artifact.documentId, mutateDocuments]);
 
   const { mutate } = useSWRConfig();
   const [isContentDirty, setIsContentDirty] = useState(false);
@@ -251,7 +279,7 @@ function PureArtifact({
 
   return (
     <div
-      className="flex h-dvh w-[400px] shrink-0 flex-col border-l border-zinc-200 bg-background dark:border-zinc-700 dark:bg-muted"
+      className="hidden h-dvh w-[400px] shrink-0 flex-col border-l border-zinc-200 bg-background md:flex dark:border-zinc-700 dark:bg-muted"
       data-testid="artifact"
     >
       <div className="flex flex-row items-start justify-between p-2">

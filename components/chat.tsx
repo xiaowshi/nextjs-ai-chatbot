@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
+import { useIsMobile } from "@/hooks/use-mobile";
 import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { Attachment, ChatMessage } from "@/lib/types";
@@ -144,6 +145,7 @@ export function Chat({
   );
 
   const [attachments, setAttachments] = useState<Attachment[]>([]);
+  const isMobile = useIsMobile();
 
   useAutoResume({
     autoResume,
@@ -155,7 +157,7 @@ export function Chat({
   return (
     <>
       <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-row bg-background">
-        <div className="flex flex-1 flex-col min-w-0">
+        <div className="flex w-full flex-col min-w-0 md:flex-1">
           <ChatHeader
             chatId={id}
             isReadonly={isReadonly}
@@ -164,7 +166,7 @@ export function Chat({
 
         <Messages
           chatId={id}
-          isArtifactVisible={true}
+          isArtifactVisible={!isMobile}
           isReadonly={isReadonly}
           messages={messages}
           regenerate={regenerate}
@@ -196,23 +198,25 @@ export function Chat({
           </div>
         </div>
 
-        <Artifact
-          attachments={attachments}
-          chatId={id}
-          input={input}
-          isReadonly={isReadonly}
-          messages={messages}
-          regenerate={regenerate}
-          selectedModelId={currentModelId}
-          selectedVisibilityType={visibilityType}
-          sendMessage={sendMessage}
-          setAttachments={setAttachments}
-          setInput={setInput}
-          setMessages={setMessages}
-          status={status}
-          stop={stop}
-          votes={votes}
-        />
+        {!isMobile && (
+          <Artifact
+            attachments={attachments}
+            chatId={id}
+            input={input}
+            isReadonly={isReadonly}
+            messages={messages}
+            regenerate={regenerate}
+            selectedModelId={currentModelId}
+            selectedVisibilityType={visibilityType}
+            sendMessage={sendMessage}
+            setAttachments={setAttachments}
+            setInput={setInput}
+            setMessages={setMessages}
+            status={status}
+            stop={stop}
+            votes={votes}
+          />
+        )}
       </div>
 
       <AlertDialog
