@@ -79,6 +79,25 @@ function PureArtifact({
 }) {
   const { artifact, setArtifact, metadata, setMetadata } = useArtifact();
 
+  // Reset artifact when chatId changes
+  useEffect(() => {
+    setArtifact({
+      documentId: "init",
+      title: "7-Habit Todo List",
+      kind: "text",
+      content: "",
+      status: "idle",
+      isVisible: true,
+      boundingBox: {
+        top: 0,
+        left: 0,
+        width: 0,
+        height: 0,
+      },
+    });
+    setMetadata(null);
+  }, [chatId, setArtifact, setMetadata]);
+
   // Fetch document by chatId if documentId is "init"
   const { data: documentByChat } = useSWR<Document>(
     artifact.documentId === "init" && chatId

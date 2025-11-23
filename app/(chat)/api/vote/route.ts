@@ -212,27 +212,6 @@ export async function PATCH(request: Request) {
             contentToAppend.push(...newPlans);
           }
 
-          // Always add mock data for testing and visualization
-          // This helps visualize the todo-list functionality regardless of extraction success
-          const timestamp = new Date().toLocaleTimeString("zh-CN", { 
-            hour: "2-digit", 
-            minute: "2-digit" 
-          });
-
-          if (contentToAppend.length === 0) {
-            // No plans extracted, add comprehensive mock data
-            const mockPlans = [
-              "1. 明确目标：设定清晰、可衡量的目标，确保方向明确",
-              "2. 制定计划：将大目标分解为具体可执行的步骤",
-              "3. 设定时间：为每个步骤分配合理的时间期限",
-              "4. 执行行动：按照计划逐步实施，保持专注和坚持"
-            ];
-            contentToAppend.push(...mockPlans);
-          } else {
-            // Plans were extracted, add a timestamped mock entry to confirm functionality
-            contentToAppend.push(`示例计划项（${timestamp}）：这是一个测试计划项，用于验证 todo-list 功能`);
-          }
-
           if (contentToAppend.length > 0) {
             const newContent = existingContent
               ? `${existingContent}\n\n${contentToAppend.join("\n\n")}`
@@ -246,8 +225,6 @@ export async function PATCH(request: Request) {
               userId: session.user.id,
             });
           }
-        } else {
-          console.error("Failed to create or find document for chatId:", chatId);
         }
       }
     } catch (error) {

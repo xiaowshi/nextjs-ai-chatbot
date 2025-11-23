@@ -1,9 +1,5 @@
 import { gateway } from "@ai-sdk/gateway";
-import {
-  customProvider,
-  extractReasoningMiddleware,
-  wrapLanguageModel,
-} from "ai";
+import { customProvider } from "ai";
 import { isTestEnvironment } from "../constants";
 
 export const myProvider = isTestEnvironment
@@ -11,13 +7,13 @@ export const myProvider = isTestEnvironment
       const {
         artifactModel,
         chatModel,
-        reasoningModel,
+        deepseekModel,
         titleModel,
       } = require("./models.mock");
       return customProvider({
         languageModels: {
           "chat-model": chatModel,
-          "chat-model-reasoning": reasoningModel,
+          "deepseek-v3": deepseekModel,
           "title-model": titleModel,
           "artifact-model": artifactModel,
         },
@@ -26,10 +22,7 @@ export const myProvider = isTestEnvironment
   : customProvider({
       languageModels: {
         "chat-model": gateway.languageModel("xai/grok-2-vision-1212"),
-        "chat-model-reasoning": wrapLanguageModel({
-          model: gateway.languageModel("xai/grok-3-mini"),
-          middleware: extractReasoningMiddleware({ tagName: "think" }),
-        }),
+        "deepseek-v3": gateway.languageModel("deepseek/deepseek-v3"),
         "title-model": gateway.languageModel("xai/grok-2-1212"),
         "artifact-model": gateway.languageModel("xai/grok-2-1212"),
       },

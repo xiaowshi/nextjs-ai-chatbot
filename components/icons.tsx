@@ -1211,3 +1211,20 @@ export const WarningIcon = ({ size = 16 }: { size?: number }) => {
     </svg>
   );
 };
+
+export const VoteIcon = ({ size = 16 }: { size?: number }) => (
+  <svg
+    height={size}
+    strokeLinejoin="round"
+    style={{ color: "currentcolor" }}
+    viewBox="0 0 16 16"
+    width={size}
+  >
+    <path
+      clipRule="evenodd"
+      d="M2 2C1.44772 2 1 2.44772 1 3V13C1 13.5523 1.44772 14 2 14H14C14.5523 14 15 13.5523 15 13V3C15 2.44772 14.5523 2 14 2H2ZM2.5 3.5H13.5V12.5H2.5V3.5ZM4.5 5.5C4.22386 5.5 4 5.72386 4 6V10C4 10.2761 4.22386 10.5 4.5 10.5C4.77614 10.5 5 10.2761 5 10V6C5 5.72386 4.77614 5.5 4.5 5.5ZM7.5 5.5C7.22386 5.5 7 5.72386 7 6V10C7 10.2761 7.22386 10.5 7.5 10.5C7.77614 10.5 8 10.2761 8 10V6C8 5.72386 7.77614 5.5 7.5 5.5ZM10.5 5.5C10.2239 5.5 10 5.72386 10 6V10C10 10.2761 10.2239 10.5 10.5 10.5C10.7761 10.5 11 10.2761 11 10V6C11 5.72386 10.7761 5.5 10.5 5.5Z"
+      fill="currentColor"
+      fillRule="evenodd"
+    />
+  </svg>
+);
