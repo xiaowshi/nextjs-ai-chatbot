@@ -82,14 +82,9 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     }
 
     const handleToggleTodo = (id: string, completed: boolean) => {
-      console.log("[TODO] Toggle todo:", { id, completed, currentMetadata: metadata });
-      
       if (setMetadata) {
         setMetadata((current) => {
-          // Always create a new Set to ensure React detects the change
           const completedTodos = new Set(current?.completedTodos || []);
-          const previousSize = completedTodos.size;
-          
           if (completed) {
             completedTodos.add(id);
             // Show celebration when completing
@@ -97,32 +92,19 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
           } else {
             completedTodos.delete(id);
           }
-          
-          const newSize = completedTodos.size;
-          console.log("[TODO] Updated completedTodos:", { 
-            id, 
-            completed, 
-            previousSize, 
-            newSize,
-            hasId: completedTodos.has(id)
-          });
-          
           // Save version when toggling todo (both complete and uncomplete)
           onSaveContent(content, false);
-          
-          // Return new object with new Set to ensure React re-renders
           return {
             ...current,
-            completedTodos: new Set(completedTodos), // Create new Set instance
+            completedTodos,
           };
         });
-      } else {
-        console.log("[TODO] ERROR: setMetadata is not available");
       }
     };
 
     const handleEditTodo = (id: string, originalText: string, newText: string) => {
       // Find the todo item in content and replace it
+      // Match the same format that TodoList uses: "> - [text]" or "- [text]"
       const lines = content.split("\n");
       let found = false;
       
@@ -131,31 +113,33 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
         const trimmed = line.trim();
         if (!trimmed) continue;
 
-        // Check if this line contains the original text (more flexible matching)
-        if (trimmed.includes(originalText) || originalText.includes(trimmed.split(/\s+/).slice(1).join(" "))) {
-          // Match various list formats to extract prefix
-          const patterns = [
-            /^(\d+[\.、])\s*(.+)$/,
-            /^([一二三四五六七八九十]+[、.])\s*(.+)$/,
-            /^(步骤\s*\d+[：:])\s*(.+)$/,
-            /^([-*])\s*(.+)$/,
-            /^(\d+\s+)(.+)$/,
-          ];
+        // Match action points: "> - [text]" or "- [text]" (same as TodoList parsing)
+        const actionMatch = trimmed.match(/^>\s*-\s*(.+)$/) || trimmed.match(/^-\s*(.+)$/);
+        
+        if (actionMatch) {
+          const actionText = actionMatch[1]?.trim() ?? "";
+          
+          // Check if this line matches the original text
+          // Use exact match or contains match for flexibility
+          const textMatches = actionText === originalText.trim() || 
+                             actionText.includes(originalText.trim()) ||
+                             originalText.trim().includes(actionText);
 
-          let prefix = "";
-          for (const pattern of patterns) {
-            const match = trimmed.match(pattern);
-            if (match) {
-              prefix = match[1] ?? "";
-              break;
+          if (textMatches) {
+            // Preserve the original line structure (indentation and "> " prefix)
+            const indent = line.match(/^(\s*)/)?.[1] ?? "";
+            const hasQuotePrefix = trimmed.startsWith("> ");
+            
+            // Reconstruct the line with new text, preserving format
+            if (hasQuotePrefix) {
+              lines[i] = `${indent}> - ${newText}`;
+            } else {
+              lines[i] = `${indent}- ${newText}`;
             }
+            
+            found = true;
+            break;
           }
-
-          // Replace the line with new text, preserving prefix and original indentation
-          const indent = line.match(/^(\s*)/)?.[1] ?? "";
-          lines[i] = prefix ? `${indent}${prefix} ${newText}` : `${indent}${newText}`;
-          found = true;
-          break;
         }
       }
 

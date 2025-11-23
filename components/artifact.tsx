@@ -241,11 +241,20 @@ function PureArtifact({
             const newDocument = await response.json();
             setIsContentDirty(false);
 
-            // Update artifact with new documentId if it was "init"
-            if (artifact.documentId === "init" && newDocument[0]?.id) {
+            const finalDocument = Array.isArray(newDocument) ? newDocument[0] : newDocument;
+
+            // Update artifact with new documentId and content if it was "init"
+            if (artifact.documentId === "init" && finalDocument?.id) {
               setArtifact((currentArtifact) => ({
                 ...currentArtifact,
-                documentId: newDocument[0].id,
+                documentId: finalDocument.id,
+                content: updatedContent,
+              }));
+            } else {
+              // Update artifact content even if documentId is not "init"
+              setArtifact((currentArtifact) => ({
+                ...currentArtifact,
+                content: updatedContent,
               }));
             }
 
@@ -263,6 +272,12 @@ function PureArtifact({
             });
 
             setIsContentDirty(false);
+
+            // Update artifact content immediately so UI reflects the change
+            setArtifact((currentArtifact) => ({
+              ...currentArtifact,
+              content: updatedContent,
+            }));
 
             const newDocument = {
               ...currentDocument,
