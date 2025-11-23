@@ -9,6 +9,7 @@ type TodoItem = {
   text: string;
   completed: boolean;
   originalLine?: string;
+  tag?: string; // 习惯名称作为tag
 };
 
 type TodoListProps = {
@@ -32,62 +33,49 @@ export function TodoList({
     if (!content) return [];
 
     // 解析内容，提取计划项
-    // 支持多种格式：
-    // 1. 编号列表：1. xxx, 2. xxx
-    // 2. 步骤：步骤1: xxx, 步骤2: xxx
-    // 3. 中文章节号：一、xxx, 二、xxx
-    // 4. 普通列表项：- xxx, * xxx
+    // 新格式支持：
+    // > ### [习惯名称]
+    // > - [具体行动点]
 
     const lines = content.split("\n");
     const items: TodoItem[] = [];
-    let currentSection = "";
+    let currentHabit = ""; // 当前习惯名称
     let itemIndex = 0;
 
     for (const line of lines) {
       const trimmed = line.trim();
       if (!trimmed) continue;
 
-      // 检查是否是标题或分隔符
-      if (trimmed.startsWith("#") || trimmed.startsWith("---") || trimmed.startsWith("##")) {
-        if (trimmed.startsWith("###")) {
-          currentSection = trimmed.replace(/^###\s*/, "");
+      // 匹配习惯名称：> ### [习惯名称] 或 ### [习惯名称]
+      const habitMatch = trimmed.match(/^>\s*###\s*(.+)$/) || trimmed.match(/^###\s*(.+)$/);
+      if (habitMatch) {
+        // 提取习惯名称，去掉符号，只保留文字
+        currentHabit = habitMatch[1].trim();
+        continue;
+      }
+
+      // 匹配行动点：> - [具体行动点] 或 - [具体行动点]
+      const actionMatch = trimmed.match(/^>\s*-\s*(.+)$/) || trimmed.match(/^-\s*(.+)$/);
+      if (actionMatch) {
+        // 提取行动点文字，去掉符号
+        const actionText = actionMatch[1].trim();
+        if (actionText && actionText.length > 0) {
+          // 使用文本内容和行号作为 ID，确保稳定性
+          const id = `${currentHabit}-${itemIndex}-${actionText.slice(0, 50)}`;
+          items.push({
+            id,
+            text: actionText,
+            completed: completedItems.has(id),
+            originalLine: trimmed, // 保存原始行用于编辑
+            tag: currentHabit || undefined, // 添加习惯名称作为tag
+          });
+          itemIndex++;
         }
         continue;
       }
 
-      // 匹配各种列表格式
-      const patterns = [
-        /^(\d+)[\.、]\s*(.+)$/, // 1. xxx 或 1、xxx
-        /^[一二三四五六七八九十]+[、.]\s*(.+)$/, // 一、xxx
-        /^步骤\s*\d+[：:]\s*(.+)$/, // 步骤1: xxx
-        /^[-*]\s*(.+)$/, // - xxx 或 * xxx
-        /^(\d+)\s+(.+)$/, // 1 xxx (空格分隔)
-      ];
-
-      let matched = false;
-      for (const pattern of patterns) {
-        const match = trimmed.match(pattern);
-        if (match) {
-          const text = match[2] || match[1];
-          if (text && text.length > 0) {
-            const trimmedText = text.trim();
-            // 使用文本内容和行号作为 ID，确保稳定性
-            const id = `${currentSection}-${itemIndex}-${trimmedText.slice(0, 50)}`;
-            items.push({
-              id,
-              text: trimmedText,
-              completed: completedItems.has(id),
-              originalLine: trimmed, // 保存原始行用于编辑
-            });
-            itemIndex++;
-            matched = true;
-            break;
-          }
-        }
-      }
-
-      // 如果没有匹配到列表格式，但行不为空，可能是多行计划的一部分
-      if (!matched && items.length > 0 && !trimmed.match(/^[-*#\d一二三四五六七八九十步骤]/)) {
+      // 如果没有匹配到行动点格式，但行不为空，可能是多行行动点的一部分
+      if (items.length > 0 && !trimmed.match(/^[>#-]/)) {
         // 追加到上一个项目
         const lastItem = items[items.length - 1];
         if (lastItem) {
@@ -151,7 +139,7 @@ export function TodoList({
       <div className="flex h-full items-center justify-center p-8 text-muted-foreground">
         <div className="text-center">
           <p className="text-sm">暂无待办事项</p>
-          <p className="mt-2 text-xs">当你点赞回答时，计划会被添加到此处</p>
+          <p className="mt-2 text-xs">当你采纳回答时，计划会被添加到此处</p>
         </div>
       </div>
     );
@@ -215,13 +203,22 @@ export function TodoList({
             </div>
           ) : (
             <>
-              <div
-                className={cn(
-                  "flex-1 text-sm",
-                  todo.completed && "text-muted-foreground line-through"
+              <div className="flex-1">
+                <div
+                  className={cn(
+                    "text-sm",
+                    todo.completed && "text-muted-foreground line-through"
+                  )}
+                >
+                  {todo.text}
+                </div>
+                {todo.tag && (
+                  <div className="mt-1">
+                    <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                      {todo.tag}
+                    </span>
+                  </div>
                 )}
-              >
-                {todo.text}
               </div>
               {!todo.completed && onEditItem && (
                 <button
