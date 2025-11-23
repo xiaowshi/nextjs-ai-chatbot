@@ -95,7 +95,11 @@ function PureArtifact({
         height: 0,
       },
     });
-    setMetadata(null);
+    // Reset metadata but preserve structure
+    setMetadata({
+      suggestions: [],
+      completedTodos: new Set<string>(),
+    });
   }, [chatId, setArtifact, setMetadata]);
 
   // Fetch document by chatId if documentId is "init"
@@ -146,9 +150,17 @@ function PureArtifact({
           ...currentArtifact,
           content: mostRecentDocument.content ?? "",
         }));
+        
+        // Ensure metadata is initialized when document loads
+        if (!metadata || !metadata.completedTodos) {
+          setMetadata({
+            suggestions: metadata?.suggestions || [],
+            completedTodos: new Set<string>(),
+          });
+        }
       }
     }
-  }, [documents, setArtifact]);
+  }, [documents, setArtifact, metadata, setMetadata]);
 
   useEffect(() => {
     mutateDocuments();

@@ -1,26 +1,33 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
-import { Check } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { Check, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type TodoItem = {
   id: string;
   text: string;
   completed: boolean;
+  originalLine?: string;
 };
 
 type TodoListProps = {
   content: string;
   completedItems?: Set<string>;
   onToggleItem?: (id: string, completed: boolean) => void;
+  onEditItem?: (id: string, originalText: string, newText: string) => void;
+  onCelebration?: () => void;
 };
 
 export function TodoList({
   content,
   completedItems = new Set(),
   onToggleItem,
+  onEditItem,
+  onCelebration,
 }: TodoListProps) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
   const todos = useMemo(() => {
     if (!content) return [];
 
@@ -64,12 +71,13 @@ export function TodoList({
           const text = match[2] || match[1];
           if (text && text.length > 0) {
             const trimmedText = text.trim();
-            // 使用文本内容的哈希作为 ID，确保稳定性
-            const id = `${currentSection}-${trimmedText.slice(0, 50)}`;
+            // 使用文本内容和行号作为 ID，确保稳定性
+            const id = `${currentSection}-${itemIndex}-${trimmedText.slice(0, 50)}`;
             items.push({
               id,
               text: trimmedText,
               completed: completedItems.has(id),
+              originalLine: trimmed, // 保存原始行用于编辑
             });
             itemIndex++;
             matched = true;
@@ -95,11 +103,42 @@ export function TodoList({
     (id: string) => {
       const item = todos.find((t) => t.id === id);
       if (item && onToggleItem) {
-        onToggleItem(id, !item.completed);
+        const newCompleted = !item.completed;
+        onToggleItem(id, newCompleted);
+        
+        // Trigger celebration when completing a todo
+        if (newCompleted && onCelebration) {
+          onCelebration();
+        }
       }
     },
-    [todos, onToggleItem]
+    [todos, onToggleItem, onCelebration]
   );
+
+  const handleStartEdit = useCallback(
+    (id: string, currentText: string) => {
+      setEditingId(id);
+      setEditText(currentText);
+    },
+    []
+  );
+
+  const handleSaveEdit = useCallback(
+    (id: string) => {
+      const item = todos.find((t) => t.id === id);
+      if (onEditItem && editText.trim() && item) {
+        onEditItem(id, item.text, editText.trim());
+      }
+      setEditingId(null);
+      setEditText("");
+    },
+    [editText, onEditItem, todos]
+  );
+
+  const handleCancelEdit = useCallback(() => {
+    setEditingId(null);
+    setEditText("");
+  }, []);
 
   if (todos.length === 0) {
     return (
@@ -137,14 +176,59 @@ export function TodoList({
           >
             {todo.completed && <Check className="h-3 w-3" />}
           </button>
-          <div
-            className={cn(
-              "flex-1 text-sm",
-              todo.completed && "text-muted-foreground line-through"
-            )}
-          >
-            {todo.text}
-          </div>
+          {editingId === todo.id ? (
+            <div className="flex flex-1 items-center gap-2">
+              <input
+                type="text"
+                value={editText}
+                onChange={(e) => setEditText(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSaveEdit(todo.id);
+                  } else if (e.key === "Escape") {
+                    handleCancelEdit();
+                  }
+                }}
+                className="flex-1 rounded border px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                autoFocus
+              />
+              <button
+                type="button"
+                onClick={() => handleSaveEdit(todo.id)}
+                className="rounded bg-primary px-2 py-1 text-xs text-primary-foreground hover:bg-primary/90"
+              >
+                保存
+              </button>
+              <button
+                type="button"
+                onClick={handleCancelEdit}
+                className="rounded border px-2 py-1 text-xs hover:bg-muted"
+              >
+                取消
+              </button>
+            </div>
+          ) : (
+            <>
+              <div
+                className={cn(
+                  "flex-1 text-sm",
+                  todo.completed && "text-muted-foreground line-through"
+                )}
+              >
+                {todo.text}
+              </div>
+              {!todo.completed && onEditItem && (
+                <button
+                  type="button"
+                  onClick={() => handleStartEdit(todo.id, todo.text)}
+                  className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded text-muted-foreground hover:text-foreground hover:bg-muted"
+                  aria-label="编辑"
+                >
+                  <Pencil className="h-3 w-3" />
+                </button>
+              )}
+            </>
+          )}
         </div>
       ))}
     </div>
