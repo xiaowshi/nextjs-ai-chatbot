@@ -82,9 +82,14 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
     }
 
     const handleToggleTodo = (id: string, completed: boolean) => {
+      console.log("[TODO] Toggle todo:", { id, completed, currentMetadata: metadata });
+      
       if (setMetadata) {
         setMetadata((current) => {
+          // Always create a new Set to ensure React detects the change
           const completedTodos = new Set(current?.completedTodos || []);
+          const previousSize = completedTodos.size;
+          
           if (completed) {
             completedTodos.add(id);
             // Show celebration when completing
@@ -92,13 +97,27 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
           } else {
             completedTodos.delete(id);
           }
+          
+          const newSize = completedTodos.size;
+          console.log("[TODO] Updated completedTodos:", { 
+            id, 
+            completed, 
+            previousSize, 
+            newSize,
+            hasId: completedTodos.has(id)
+          });
+          
           // Save version when toggling todo (both complete and uncomplete)
           onSaveContent(content, false);
+          
+          // Return new object with new Set to ensure React re-renders
           return {
             ...current,
-            completedTodos,
+            completedTodos: new Set(completedTodos), // Create new Set instance
           };
         });
+      } else {
+        console.log("[TODO] ERROR: setMetadata is not available");
       }
     };
 

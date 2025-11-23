@@ -169,9 +169,16 @@ function PureArtifact({
         }));
         
         // Ensure metadata is initialized when document loads
-        if (!metadata || !metadata.completedTodos) {
+        // Only reset if metadata is completely missing, preserve existing completedTodos
+        if (!metadata) {
           setMetadata({
-            suggestions: metadata?.suggestions || [],
+            suggestions: [],
+            completedTodos: new Set<string>(),
+          });
+        } else if (!metadata.completedTodos) {
+          // If metadata exists but completedTodos is missing, add it without resetting
+          setMetadata({
+            ...metadata,
             completedTodos: new Set<string>(),
           });
         }

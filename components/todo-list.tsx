@@ -62,10 +62,17 @@ export function TodoList({
         if (actionText && actionText.length > 0) {
           // 使用文本内容和行号作为 ID，确保稳定性
           const id = `${currentHabit}-${itemIndex}-${actionText.slice(0, 50)}`;
+          const isCompleted = completedItems.has(id);
+          
+          // Debug log
+          if (isCompleted) {
+            console.log("[TODO] Found completed item:", { id, text: actionText.substring(0, 30) });
+          }
+          
           items.push({
             id,
             text: actionText,
-            completed: completedItems.has(id),
+            completed: isCompleted,
             originalLine: trimmed, // 保存原始行用于编辑
             tag: currentHabit || undefined, // 添加习惯名称作为tag
           });
@@ -83,6 +90,12 @@ export function TodoList({
         }
       }
     }
+
+    console.log("[TODO] Parsed todos:", { 
+      total: items.length, 
+      completed: items.filter(i => i.completed).length,
+      completedItemsSize: completedItems.size 
+    });
 
     return items;
   }, [content, completedItems]);
