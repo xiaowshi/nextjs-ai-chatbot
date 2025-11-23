@@ -98,21 +98,48 @@ export async function PATCH(request: Request) {
         console.log("[UPVOTE] Message text preview:", messageText.substring(0, 200));
 
         // Extract plans from the seven habits format
-        // Pattern: ### 1. 积极主动：\n[对习惯原则在语境中的简明重述]\n[清晰、具体、可执行的计划，包含编号步骤和可衡量的结果]
-        // We need to extract the plan part (the numbered steps) after the habit description
-        const habitSections = messageText.split(/### \d+\. /);
-        console.log("[UPVOTE] Habit sections found:", habitSections.length - 1);
+        // Support multiple patterns:
+        // 1. ### 1. 积极主动：\n[计划内容]
+        // 2. > ### 以终为始\n> - [计划内容]
+        // 3. ### 要事第一\n- [计划内容]
+        console.log("[UPVOTE] Full message text:", messageText);
+        
         const plans: string[] = [];
+        const debugLogs: string[] = [];
+        
+        // Pattern 1: Split by numbered habits: ### 1. 习惯名称：
+        let habitSections = messageText.split(/### \d+\. /);
+        debugLogs.push(`[UPVOTE] Pattern 1 (numbered): Found ${habitSections.length - 1} sections`);
+        
+        // Pattern 2: Split by > ### 习惯名称 (with quote prefix)
+        if (habitSections.length === 1) {
+          habitSections = messageText.split(/>\s*###\s+/);
+          debugLogs.push(`[UPVOTE] Pattern 2 (with >): Found ${habitSections.length - 1} sections`);
+        }
+        
+        // Pattern 3: Split by ### 习惯名称 (without number or quote)
+        if (habitSections.length === 1) {
+          habitSections = messageText.split(/###\s+/);
+          debugLogs.push(`[UPVOTE] Pattern 3 (simple): Found ${habitSections.length - 1} sections`);
+        }
 
-        for (const section of habitSections.slice(1)) {
+        console.log("[UPVOTE] Habit sections found:", habitSections.length - 1);
+        debugLogs.push(`[UPVOTE] Total habit sections: ${habitSections.length - 1}`);
+
+        for (let sectionIndex = 0; sectionIndex < habitSections.slice(1).length; sectionIndex++) {
+          const section = habitSections[sectionIndex + 1];
+          debugLogs.push(`[UPVOTE] Processing section ${sectionIndex + 1}, length: ${section.length}`);
+          
           // Split by lines and find the plan part
           const lines = section.split("\n");
           let inPlanSection = false;
           let planLines: string[] = [];
           let skippedHabitName = false;
+          let habitName = "";
 
           for (let i = 0; i < lines.length; i++) {
-            const line = lines[i]?.trim() ?? "";
+            const originalLine = lines[i] ?? "";
+            const line = originalLine.trim();
 
             // Skip empty lines at the start
             if (!line) {
@@ -123,9 +150,14 @@ export async function PATCH(request: Request) {
               continue;
             }
 
-            // Skip the habit name line (ends with : or ：)
-            if (!skippedHabitName && (line.endsWith("：") || line.endsWith(":"))) {
+            // Extract habit name from first non-empty line
+            if (!skippedHabitName) {
+              // Remove > prefix if present
+              const cleanLine = line.replace(/^>\s*/, "");
+              // Extract habit name (remove : or ： at end)
+              habitName = cleanLine.replace(/[：:]\s*$/, "").trim();
               skippedHabitName = true;
+              debugLogs.push(`[UPVOTE] Section ${sectionIndex + 1} habit name: ${habitName}`);
               continue;
             }
 
@@ -136,42 +168,65 @@ export async function PATCH(request: Request) {
               line.includes("荟萃分析") ||
               line.startsWith("---")
             ) {
+              debugLogs.push(`[UPVOTE] Section ${sectionIndex + 1} stopped at: ${line.substring(0, 50)}`);
               break;
             }
 
-            // Check if this looks like a plan item (starts with number, Chinese number, or step)
-            // Match patterns like: "1. xxx", "1、xxx", "一、xxx", "步骤1: xxx"
-            const isPlanItem = /^\d+[\.、]\s+.+|^[一二三四五六七八九十]+[、.]\s+.+|^步骤\s*\d+[：:]\s+.+/.test(line);
+            // Check if this looks like a plan item
+            // Match patterns like: "> - xxx", "- xxx", "1. xxx", "1、xxx", "一、xxx", "步骤1: xxx"
+            const cleanLine = line.replace(/^>\s*/, ""); // Remove > prefix
+            const isPlanItem = /^[-*]\s+.+|^\d+[\.、]\s+.+|^[一二三四五六七八九十]+[、.]\s+.+|^步骤\s*\d+[：:]\s+.+/.test(cleanLine);
 
             if (isPlanItem) {
               inPlanSection = true;
-              planLines.push(line);
+              planLines.push(cleanLine);
+              debugLogs.push(`[UPVOTE] Section ${sectionIndex + 1} plan item: ${cleanLine.substring(0, 50)}`);
             } else if (inPlanSection) {
               // If we're already in plan section, continue collecting (might be multi-line plan)
               // But stop if we see a markdown header or separator
-              if (line.startsWith("#") || line.startsWith("---")) {
+              if (cleanLine.startsWith("#") || cleanLine.startsWith("---")) {
+                debugLogs.push(`[UPVOTE] Section ${sectionIndex + 1} stopped at markdown header`);
                 break;
               }
               // Continue collecting if it's part of the plan (not a new section)
-              planLines.push(line);
+              // Only add if it's not another habit header
+              if (!cleanLine.match(/^###\s+/)) {
+                planLines.push(cleanLine);
+              } else {
+                break;
+              }
             }
           }
 
           if (planLines.length > 0) {
-            const planText = planLines
+            // Add habit name as header if we have one
+            let planText = planLines
               .filter((l) => l.trim().length > 0) // Remove empty lines
               .join("\n")
               .trim();
+            
             if (planText) {
+              // Format: ### [习惯名称]\n[计划内容]
+              if (habitName) {
+                planText = `### ${habitName}\n${planText}`;
+              }
               plans.push(planText);
               console.log("[UPVOTE] Extracted plan:", planText.substring(0, 100));
+              debugLogs.push(`[UPVOTE] Section ${sectionIndex + 1} extracted plan length: ${planText.length}`);
             }
+          } else {
+            debugLogs.push(`[UPVOTE] Section ${sectionIndex + 1} no plan items found`);
           }
         }
 
         console.log("[UPVOTE] Total plans extracted:", plans.length);
+        debugLogs.push(`[UPVOTE] Total plans extracted: ${plans.length}`);
+        
         if (plans.length === 0) {
           console.log("[UPVOTE] WARNING: No plans extracted from message");
+          debugLogs.push("[UPVOTE] WARNING: No plans extracted from message");
+          // Add debug info to help diagnose
+          debugLogs.push(`[UPVOTE] Message text sample: ${messageText.substring(0, 500)}`);
         }
 
         // Get or create document
@@ -231,9 +286,10 @@ export async function PATCH(request: Request) {
             console.log("[UPVOTE] New plans after filtering:", newPlans.length);
             contentToAppend.push(...newPlans);
           } else {
-            // If no content was extracted, append default message
-            console.log("[UPVOTE] No content extracted, appending default message");
-            contentToAppend.push("不好意思请重试");
+            // If no content was extracted, append debug logs and default message
+            console.log("[UPVOTE] No content extracted, appending debug logs and default message");
+            const debugInfo = debugLogs.join("\n");
+            contentToAppend.push(`## 调试信息\n${debugInfo}\n\n不好意思请重试`);
           }
 
           if (contentToAppend.length > 0) {

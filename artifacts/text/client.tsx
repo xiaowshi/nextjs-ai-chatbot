@@ -89,11 +89,11 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
             completedTodos.add(id);
             // Show celebration when completing
             setShowCelebration(true);
-            // Save version when completing a todo
-            onSaveContent(content, false);
           } else {
             completedTodos.delete(id);
           }
+          // Save version when toggling todo (both complete and uncomplete)
+          onSaveContent(content, false);
           return {
             ...current,
             completedTodos,
