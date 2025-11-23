@@ -83,17 +83,25 @@ export async function PATCH(request: Request) {
   // If upvoted, extract plans from message and append to document
   if (type === "up") {
     try {
+      console.log("[UPVOTE] Starting upvote process", { chatId, messageId });
+      
       const messages = await getMessagesByChatId({ id: chatId });
+      console.log("[UPVOTE] Fetched messages count:", messages.length);
+      
       const uiMessages = convertToUIMessages(messages);
       const message = uiMessages.find((m) => m.id === messageId);
+      console.log("[UPVOTE] Found message:", message ? { id: message.id, role: message.role } : "not found");
 
       if (message && message.role === "assistant") {
         const messageText = getTextFromMessage(message);
+        console.log("[UPVOTE] Message text length:", messageText.length);
+        console.log("[UPVOTE] Message text preview:", messageText.substring(0, 200));
 
         // Extract plans from the seven habits format
         // Pattern: ### 1. 积极主动：\n[对习惯原则在语境中的简明重述]\n[清晰、具体、可执行的计划，包含编号步骤和可衡量的结果]
         // We need to extract the plan part (the numbered steps) after the habit description
         const habitSections = messageText.split(/### \d+\. /);
+        console.log("[UPVOTE] Habit sections found:", habitSections.length - 1);
         const plans: string[] = [];
 
         for (const section of habitSections.slice(1)) {
@@ -156,8 +164,14 @@ export async function PATCH(request: Request) {
               .trim();
             if (planText) {
               plans.push(planText);
+              console.log("[UPVOTE] Extracted plan:", planText.substring(0, 100));
             }
           }
+        }
+
+        console.log("[UPVOTE] Total plans extracted:", plans.length);
+        if (plans.length === 0) {
+          console.log("[UPVOTE] WARNING: No plans extracted from message");
         }
 
         // Get or create document
@@ -165,9 +179,11 @@ export async function PATCH(request: Request) {
           chatId,
           userId: session.user.id,
         });
+        console.log("[UPVOTE] Document found:", document ? "yes" : "no");
 
         if (!document) {
           // If document doesn't exist, create one
+          console.log("[UPVOTE] Creating new document");
           const { generateUUID } = await import("@/lib/utils");
           const documentId = generateUUID();
           const { saveDocument } = await import("@/lib/db/queries");
@@ -184,12 +200,14 @@ export async function PATCH(request: Request) {
             chatId,
             userId: session.user.id,
           });
+          console.log("[UPVOTE] Document created:", document ? "yes" : "no");
         }
 
         if (document) {
           const existingContent = document.content && document.content.trim() 
             ? document.content.trim() 
             : "";
+          console.log("[UPVOTE] Existing content length:", existingContent.length);
           
           let contentToAppend: string[] = [];
 
@@ -204,12 +222,18 @@ export async function PATCH(request: Request) {
               // Check if first line of plan already exists
               const firstLine = planLines[0]?.trim();
               if (firstLine && existingContent.includes(firstLine)) {
+                console.log("[UPVOTE] Plan already exists, skipping:", firstLine.substring(0, 50));
                 return false;
               }
               return true;
             });
 
+            console.log("[UPVOTE] New plans after filtering:", newPlans.length);
             contentToAppend.push(...newPlans);
+          } else {
+            // If no content was extracted, append default message
+            console.log("[UPVOTE] No content extracted, appending default message");
+            contentToAppend.push("不好意思请重试");
           }
 
           if (contentToAppend.length > 0) {
@@ -217,6 +241,7 @@ export async function PATCH(request: Request) {
               ? `${existingContent}\n\n${contentToAppend.join("\n\n")}`
               : contentToAppend.join("\n\n");
 
+            console.log("[UPVOTE] Saving document with new content length:", newContent.length);
             await saveDocument({
               id: document.id,
               title: document.title,
@@ -224,12 +249,22 @@ export async function PATCH(request: Request) {
               content: newContent,
               userId: session.user.id,
             });
+            console.log("[UPVOTE] Document saved successfully");
+          } else {
+            console.log("[UPVOTE] WARNING: No content to append");
           }
+        } else {
+          console.log("[UPVOTE] ERROR: Document not found after creation");
         }
+      } else {
+        console.log("[UPVOTE] Message not found or not assistant message");
       }
     } catch (error) {
       // Log error but don't fail the vote
-      console.error("Failed to append plans to document:", error);
+      console.error("[UPVOTE] Failed to append plans to document:", error);
+      if (error instanceof Error) {
+        console.error("[UPVOTE] Error stack:", error.stack);
+      }
     }
   }
 

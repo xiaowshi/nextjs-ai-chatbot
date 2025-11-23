@@ -103,7 +103,7 @@ function PureArtifact({
   }, [chatId, setArtifact, setMetadata]);
 
   // Fetch document by chatId if documentId is "init"
-  const { data: documentByChat } = useSWR<Document>(
+  const { data: documentByChat, error: documentByChatError } = useSWR<Document>(
     artifact.documentId === "init" && chatId
       ? `/api/document/by-chat?chatId=${chatId}`
       : null,
@@ -113,15 +113,26 @@ function PureArtifact({
   // Set documentId when document is found
   useEffect(() => {
     if (documentByChat && artifact.documentId === "init") {
+      // Check if content is just the default placeholder text
+      const defaultContent = "记录你的待办事项，帮助你成为高效人士";
+      const content = documentByChat.content ?? "";
+      const isEmpty = !content || content.trim() === "" || content.trim() === defaultContent;
+      
       setArtifact((currentArtifact) => ({
         ...currentArtifact,
         documentId: documentByChat.id,
         title: documentByChat.title,
         kind: documentByChat.kind,
-        content: documentByChat.content ?? "",
+        content: isEmpty ? "" : content,
+      }));
+    } else if (documentByChatError && artifact.documentId === "init") {
+      // If document not found, keep content empty to show "暂无待办事项"
+      setArtifact((currentArtifact) => ({
+        ...currentArtifact,
+        content: "",
       }));
     }
-  }, [documentByChat, artifact.documentId, setArtifact]);
+  }, [documentByChat, documentByChatError, artifact.documentId, setArtifact]);
 
   const {
     data: documents,
@@ -146,9 +157,15 @@ function PureArtifact({
       if (mostRecentDocument) {
         setDocument(mostRecentDocument);
         setCurrentVersionIndex(documents.length - 1);
+        
+        // Check if content is just the default placeholder text
+        const defaultContent = "记录你的待办事项，帮助你成为高效人士";
+        const content = mostRecentDocument.content ?? "";
+        const isEmpty = !content || content.trim() === "" || content.trim() === defaultContent;
+        
         setArtifact((currentArtifact) => ({
           ...currentArtifact,
-          content: mostRecentDocument.content ?? "",
+          content: isEmpty ? "" : content,
         }));
         
         // Ensure metadata is initialized when document loads
@@ -182,22 +199,54 @@ function PureArtifact({
         return;
       }
 
-      mutate<Document[]>(
-        `/api/document?id=${artifact.documentId}`,
-        async (currentDocuments) => {
-          if (!currentDocuments) {
-            return [];
-          }
+      // Use chatId if documentId is "init", otherwise use documentId
+      const apiUrl = artifact.documentId === "init" 
+        ? `/api/document?chatId=${chatId}`
+        : `/api/document?id=${artifact.documentId}`;
+      
+      const cacheKey = artifact.documentId === "init"
+        ? `/api/document/by-chat?chatId=${chatId}`
+        : `/api/document?id=${artifact.documentId}`;
 
+      mutate<Document[] | Document>(
+        cacheKey,
+        async (currentData: Document[] | Document | undefined) => {
+          // Handle both array (from /api/document?id=) and single document (from /api/document/by-chat)
+          const currentDocuments = Array.isArray(currentData) ? currentData : (currentData ? [currentData] : []);
           const currentDocument = currentDocuments.at(-1);
 
-          if (!currentDocument || !currentDocument.content) {
+          if (!currentDocument) {
+            // If no document exists, create one
+            const response = await fetch(apiUrl, {
+              method: "POST",
+              body: JSON.stringify({
+                title: artifact.title || "7-Habit Todo List",
+                content: updatedContent,
+                kind: artifact.kind || "text",
+              }),
+            });
+
+            if (!response.ok) {
+              setIsContentDirty(false);
+              return currentData;
+            }
+
+            const newDocument = await response.json();
             setIsContentDirty(false);
-            return currentDocuments;
+
+            // Update artifact with new documentId if it was "init"
+            if (artifact.documentId === "init" && newDocument[0]?.id) {
+              setArtifact((currentArtifact) => ({
+                ...currentArtifact,
+                documentId: newDocument[0].id,
+              }));
+            }
+
+            return Array.isArray(newDocument) ? newDocument : [newDocument];
           }
 
           if (currentDocument.content !== updatedContent) {
-            await fetch(`/api/document?id=${artifact.documentId}`, {
+            await fetch(apiUrl, {
               method: "POST",
               body: JSON.stringify({
                 title: artifact.title,
@@ -216,12 +265,12 @@ function PureArtifact({
 
             return [...currentDocuments, newDocument];
           }
-          return currentDocuments;
+          return currentData;
         },
         { revalidate: false }
       );
     },
-    [artifact, mutate]
+    [artifact, chatId, mutate, setArtifact]
   );
 
   const debouncedHandleContentChange = useDebounceCallback(

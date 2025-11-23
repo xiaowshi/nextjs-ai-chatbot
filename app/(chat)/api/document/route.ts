@@ -2,10 +2,12 @@ import { auth } from "@/app/(auth)/auth";
 import type { ArtifactKind } from "@/components/artifact";
 import {
   deleteDocumentsByIdAfterTimestamp,
+  getDocumentByChatIdAndUserId,
   getDocumentsById,
   saveDocument,
 } from "@/lib/db/queries";
 import { ChatSDKError } from "@/lib/errors";
+import { generateUUID } from "@/lib/utils";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -42,11 +44,13 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   const { searchParams } = new URL(request.url);
   const id = searchParams.get("id");
+  const chatId = searchParams.get("chatId");
 
-  if (!id) {
+  // Support both id (documentId) and chatId
+  if (!id && !chatId) {
     return new ChatSDKError(
       "bad_request:api",
-      "Parameter id is required."
+      "Parameter id or chatId is required."
     ).toResponse();
   }
 
@@ -63,7 +67,38 @@ export async function POST(request: Request) {
   }: { content: string; title: string; kind: ArtifactKind } =
     await request.json();
 
-  const documents = await getDocumentsById({ id });
+  let documentId = id;
+
+  // If chatId is provided, get or create document by chatId
+  if (chatId && !id) {
+    let document = await getDocumentByChatIdAndUserId({
+      chatId,
+      userId: session.user.id,
+    });
+
+    if (!document) {
+      // Create new document if it doesn't exist
+      documentId = generateUUID();
+      await saveDocument({
+        id: documentId,
+        title: title || "7-Habit Todo List",
+        kind: kind || "text",
+        content: content || "记录你的待办事项，帮助你成为高效人士",
+        userId: session.user.id,
+      });
+    } else {
+      documentId = document.id;
+    }
+  }
+
+  if (!documentId) {
+    return new ChatSDKError(
+      "bad_request:api",
+      "Failed to determine document id."
+    ).toResponse();
+  }
+
+  const documents = await getDocumentsById({ id: documentId });
 
   if (documents.length > 0) {
     const [doc] = documents;
@@ -74,7 +109,7 @@ export async function POST(request: Request) {
   }
 
   const document = await saveDocument({
-    id,
+    id: documentId,
     content,
     title,
     kind,
