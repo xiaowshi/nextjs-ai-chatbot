@@ -7,8 +7,6 @@ import { DocumentSkeleton } from "@/components/document-skeleton";
 import {
   ClockRewind,
   CopyIcon,
-  MessageIcon,
-  PenIcon,
   RedoIcon,
   UndoIcon,
 } from "@/components/icons";
@@ -91,6 +89,8 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
             completedTodos.add(id);
             // Show celebration when completing
             setShowCelebration(true);
+            // Save version when completing a todo
+            onSaveContent(content, false);
           } else {
             completedTodos.delete(id);
           }
@@ -217,36 +217,5 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
       },
     },
   ],
-  toolbar: [
-    {
-      icon: <PenIcon />,
-      description: "Add final polish",
-      onClick: ({ sendMessage }) => {
-        sendMessage({
-          role: "user",
-          parts: [
-            {
-              type: "text",
-              text: "Please add final polish and check for grammar, add section titles for better structure, and ensure everything reads smoothly.",
-            },
-          ],
-        });
-      },
-    },
-    {
-      icon: <MessageIcon />,
-      description: "Request suggestions",
-      onClick: ({ sendMessage }) => {
-        sendMessage({
-          role: "user",
-          parts: [
-            {
-              type: "text",
-              text: "Please add suggestions you have that could improve the writing.",
-            },
-          ],
-        });
-      },
-    },
-  ],
+  toolbar: [],
 });
