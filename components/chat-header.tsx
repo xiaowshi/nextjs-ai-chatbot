@@ -4,12 +4,9 @@ import Link from "next/link";
 import { memo } from "react";
 import { Button } from "@/components/ui/button";
 import { TrashIcon, VoteIcon } from "./icons";
-import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
+import type { VisibilityType } from "./visibility-selector";
 
 function PureChatHeader({
-  chatId,
-  selectedVisibilityType,
-  isReadonly,
   onClearChat,
   onShowTodo,
 }: {
@@ -39,14 +36,6 @@ function PureChatHeader({
         <TrashIcon />
         <span className="md:sr-only">Clear Chat</span>
       </Button>
-
-      {!isReadonly && (
-        <VisibilitySelector
-          chatId={chatId}
-          className="order-3 md:order-2"
-          selectedVisibilityType={selectedVisibilityType}
-        />
-      )}
 
       <Button
         asChild

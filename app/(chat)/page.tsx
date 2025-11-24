@@ -1,50 +1,61 @@
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+"use client";
+
+import { useEffect, useState } from "react";
 import { Chat } from "@/components/chat";
 import { DataStreamHandler } from "@/components/data-stream-handler";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 import { generateUUID } from "@/lib/utils";
-import { auth } from "../(auth)/auth";
 
-export default async function Page() {
-  const session = await auth();
+export default function Page() {
+  const { isLoaded, getCurrentChatId, getChat } = useLocalStorage();
+  const [initialData, setInitialData] = useState<{
+    id: string;
+    messages: any[];
+    model: string;
+  } | null>(null);
 
-  if (!session) {
-    redirect("/api/auth/guest");
-  }
+  useEffect(() => {
+    if (!isLoaded) {
+      return;
+    }
 
-  const id = generateUUID();
+    const currentChatId = getCurrentChatId();
+    if (currentChatId) {
+      const chat = getChat(currentChatId);
+      if (chat) {
+        setInitialData({
+          id: currentChatId,
+          messages: chat.messages,
+          model: DEFAULT_CHAT_MODEL,
+        });
+        return;
+      }
+    }
 
-  const cookieStore = await cookies();
-  const modelIdFromCookie = cookieStore.get("chat-model");
+    // Create new chat if no current chat found
+    const newId = generateUUID();
+    setInitialData({
+      id: newId,
+      messages: [],
+      model: DEFAULT_CHAT_MODEL,
+    });
+  }, [isLoaded]);
 
-  if (!modelIdFromCookie) {
-    return (
-      <>
-        <Chat
-          autoResume={false}
-          id={id}
-          initialChatModel={DEFAULT_CHAT_MODEL}
-          initialMessages={[]}
-          initialVisibilityType="private"
-          isReadonly={false}
-          key={id}
-        />
-        <DataStreamHandler />
-      </>
-    );
+  if (!initialData) {
+    return null;
   }
 
   return (
     <>
       <Chat
         autoResume={false}
-        id={id}
-        initialChatModel={modelIdFromCookie.value}
-        initialMessages={[]}
+        id={initialData.id}
+        initialChatModel={initialData.model}
+        initialMessages={initialData.messages}
         initialVisibilityType="private"
         isReadonly={false}
-        key={id}
+        key={initialData.id}
       />
       <DataStreamHandler />
     </>

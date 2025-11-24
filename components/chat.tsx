@@ -26,6 +26,7 @@ import {
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { Attachment, ChatMessage } from "@/lib/types";
@@ -63,6 +64,7 @@ export function Chat({
 
   const { mutate } = useSWRConfig();
   const { setDataStream } = useDataStream();
+  const { saveChat, setCurrentChatId } = useLocalStorage();
 
   const [input, setInput] = useState<string>("");
   const [usage, setUsage] = useState<AppUsage | undefined>(initialLastContext);
@@ -112,6 +114,9 @@ export function Chat({
     },
     onFinish: () => {
       mutate(unstable_serialize(getChatHistoryPaginationKey));
+      // Save to local storage
+      saveChat(id, messages, "Chat");
+      setCurrentChatId(id);
     },
     onError: (error) => {
       if (error instanceof ChatSDKError) {
@@ -154,6 +159,14 @@ export function Chat({
 
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const isMobile = useIsMobile();
+
+  // Save messages to local storage whenever they change
+  useEffect(() => {
+    if (messages.length > 0) {
+      saveChat(id, messages, "Chat");
+      setCurrentChatId(id);
+    }
+  }, [messages, id, saveChat, setCurrentChatId]);
 
   useAutoResume({
     autoResume,
