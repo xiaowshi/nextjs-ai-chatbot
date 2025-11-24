@@ -141,18 +141,12 @@ export function TodoList({
     setEditText("");
   }, []);
 
-  const completedCount = useMemo(() => {
-    return todos.filter((todo) => todo.completed).length;
-  }, [todos]);
-
-  const totalCount = todos.length;
-
   if (todos.length === 0) {
     return (
-      <div className="flex h-full items-center justify-center p-8 text-muted-foreground">
+      <div className="flex h-full items-center justify-center p-8">
         <div className="text-center">
-          <p className="text-sm">暂无待办事项</p>
-          <p className="mt-2 text-xs">当你采纳回答时，计划会被添加到此处</p>
+          <p className="text-base font-medium text-foreground">暂无内容</p>
+          <p className="mt-3 text-sm text-muted-foreground">点击AI回答下方的「Do it!」可将行动点添加到此处</p>
         </div>
       </div>
     );
@@ -247,22 +241,6 @@ export function TodoList({
           )}
         </div>
       ))}
-      {totalCount > 0 && (
-        <div className="mt-2 rounded-lg border bg-muted/30 p-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">完成进度</span>
-            <span className="font-medium">
-              {completedCount} / {totalCount}
-            </span>
-          </div>
-          <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-full bg-primary transition-all duration-300"
-              style={{ width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%` }}
-            />
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -68,12 +68,13 @@ export function PureMessageActions({
   }
 
   return (
-    <Actions className="-ml-0.5">
+    <Actions className="-ml-0.5 flex-wrap gap-2">
       <Action onClick={handleCopy} tooltip="Copy">
         <CopyIcon />
       </Action>
 
       <Action
+        className="!h-auto !w-auto !min-w-fit !flex-row !items-center !gap-2 !px-3 !py-1.5"
         data-testid="message-upvote"
         disabled={vote?.isUpvoted}
         onClick={() => {
@@ -117,9 +118,10 @@ export function PureMessageActions({
             error: "Failed to upvote response.",
           });
         }}
-        tooltip="Upvote Response"
+        tooltip="将行动点加入ToDo"
       >
-        <CheckCircleFillIcon />
+        <CheckCircleFillIcon size={16} />
+        <span className="whitespace-nowrap text-sm">Do It!</span>
       </Action>
     </Actions>
   );

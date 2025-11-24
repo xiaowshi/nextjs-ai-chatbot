@@ -56,12 +56,12 @@ function PureChatHeader({
         variant="outline"
       >
         <Link
-          href={"https://vercel.com/templates/next.js/nextjs-ai-chatbot"}
+          href={"https://teko.woa.com/event/ai-agent/1691"}
           rel="noreferrer"
           target="_noblank"
         >
           <VoteIcon size={16} />
-          投票支持
+          球球了 投票支持一下吧～
         </Link>
       </Button>
     </header>

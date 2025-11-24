@@ -1,4 +1,4 @@
-export const DEFAULT_CHAT_MODEL: string = "chat-model";
+export const DEFAULT_CHAT_MODEL: string = "deepseek-v3";
 
 export type ChatModel = {
   id: string;
@@ -7,11 +7,6 @@ export type ChatModel = {
 };
 
 export const chatModels: ChatModel[] = [
-  {
-    id: "chat-model",
-    name: "Grok Vision",
-    description: "Advanced multimodal model with text capabilities",
-  },
   {
     id: "deepseek-v3",
     name: "DeepSeek V3",
