@@ -2,10 +2,8 @@
 
 import Link from "next/link";
 import { memo } from "react";
-import { useWindowSize } from "usehooks-ts";
 import { Button } from "@/components/ui/button";
 import { VoteIcon, TrashIcon } from "./icons";
-import { useSidebar } from "./ui/sidebar";
 import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
 
 function PureChatHeader({
@@ -19,25 +17,17 @@ function PureChatHeader({
   isReadonly: boolean;
   onClearChat?: () => void;
 }) {
-  const { open } = useSidebar();
-
-  const { width: windowWidth } = useWindowSize();
-
   return (
     <header className="sticky top-0 flex items-center gap-2 bg-background px-2 py-1.5 md:px-2">
-      {/* <SidebarToggle /> */}
-
-      {(!open || windowWidth < 768) && (
-        <Button
-          className="order-2 h-8 px-2 md:order-1 md:h-fit md:px-2"
-          onClick={onClearChat}
-          variant="outline"
-          title="Clear conversation"
-        >
-          <TrashIcon />
-          <span className="md:sr-only">Clear Chat</span>
-        </Button>
-      )}
+      <Button
+        className="order-2 h-8 px-2 md:order-1 md:h-fit md:px-2"
+        onClick={onClearChat}
+        variant="outline"
+        title="Clear conversation"
+      >
+        <TrashIcon />
+        <span className="md:sr-only">Clear Chat</span>
+      </Button>
 
       {!isReadonly && (
         <VisibilitySelector
