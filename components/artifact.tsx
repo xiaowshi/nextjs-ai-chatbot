@@ -381,7 +381,7 @@ function PureArtifact({
 
   return (
     <div
-      className="hidden h-dvh w-[400px] shrink-0 flex-col border-l border-zinc-200 bg-background md:flex dark:border-zinc-700 dark:bg-muted"
+      className="flex h-full w-full flex-col border-l border-zinc-200 bg-background md:h-dvh md:w-[400px] md:shrink-0 dark:border-zinc-700 dark:bg-muted"
       data-testid="artifact"
     >
       <div className="flex flex-row items-start justify-between p-2">
