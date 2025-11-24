@@ -17,6 +17,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -62,6 +68,7 @@ export function Chat({
   const [usage, setUsage] = useState<AppUsage | undefined>(initialLastContext);
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
   const [showClearAlert, setShowClearAlert] = useState(false);
+  const [showTodoModal, setShowTodoModal] = useState(false);
   const [currentModelId, setCurrentModelId] = useState(initialChatModel);
   const currentModelIdRef = useRef(currentModelId);
 
@@ -164,6 +171,7 @@ export function Chat({
             isReadonly={isReadonly}
             selectedVisibilityType={initialVisibilityType}
             onClearChat={() => setShowClearAlert(true)}
+            onShowTodo={() => setShowTodoModal(true)}
           />
 
         <Messages
@@ -277,6 +285,35 @@ export function Chat({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Sheet onOpenChange={setShowTodoModal} open={showTodoModal}>
+        <SheetContent className="w-full flex-col overflow-y-auto sm:max-w-md" side="right">
+          <SheetHeader>
+            <SheetTitle>待办事项</SheetTitle>
+          </SheetHeader>
+          <div className="flex-1 overflow-y-auto">
+            <div className="block md:hidden">
+              <Artifact
+                attachments={attachments}
+                chatId={id}
+                input={input}
+                isReadonly={isReadonly}
+                messages={messages}
+                regenerate={regenerate}
+                selectedModelId={currentModelId}
+                selectedVisibilityType={visibilityType}
+                sendMessage={sendMessage}
+                setAttachments={setAttachments}
+                setInput={setInput}
+                setMessages={setMessages}
+                status={status}
+                stop={stop}
+                votes={votes}
+              />
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </>
   );
 }
