@@ -1,12 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { memo } from "react";
 import { useWindowSize } from "usehooks-ts";
-import { SidebarToggle } from "@/components/sidebar-toggle";
 import { Button } from "@/components/ui/button";
-import { PlusIcon, VoteIcon } from "./icons";
+import { VoteIcon, TrashIcon } from "./icons";
 import { useSidebar } from "./ui/sidebar";
 import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
 
@@ -14,31 +12,30 @@ function PureChatHeader({
   chatId,
   selectedVisibilityType,
   isReadonly,
+  onClearChat,
 }: {
   chatId: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
+  onClearChat?: () => void;
 }) {
-  const router = useRouter();
   const { open } = useSidebar();
 
   const { width: windowWidth } = useWindowSize();
 
   return (
     <header className="sticky top-0 flex items-center gap-2 bg-background px-2 py-1.5 md:px-2">
-      <SidebarToggle />
+      {/* <SidebarToggle /> */}
 
       {(!open || windowWidth < 768) && (
         <Button
-          className="order-2 ml-auto h-8 px-2 md:order-1 md:ml-0 md:h-fit md:px-2"
-          onClick={() => {
-            router.push("/");
-            router.refresh();
-          }}
+          className="order-2 h-8 px-2 md:order-1 md:h-fit md:px-2"
+          onClick={onClearChat}
           variant="outline"
+          title="Clear conversation"
         >
-          <PlusIcon />
-          <span className="md:sr-only">New Chat</span>
+          <TrashIcon />
+          <span className="md:sr-only">Clear Chat</span>
         </Button>
       )}
 
@@ -72,6 +69,7 @@ export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
   return (
     prevProps.chatId === nextProps.chatId &&
     prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
-    prevProps.isReadonly === nextProps.isReadonly
+    prevProps.isReadonly === nextProps.isReadonly &&
+    prevProps.onClearChat === nextProps.onClearChat
   );
 });
