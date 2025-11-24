@@ -1,5 +1,4 @@
 import type { UseChatHelpers } from "@ai-sdk/react";
-import equal from "fast-deep-equal";
 import { AnimatePresence } from "framer-motion";
 import { ArrowDownIcon } from "lucide-react";
 import { memo, useEffect } from "react";
@@ -31,7 +30,7 @@ function PureMessages({
   setMessages,
   regenerate,
   isReadonly,
-}: Omit<MessagesProps, 'isArtifactVisible' | 'selectedModelId'>) {
+}: MessagesProps) {
   const {
     containerRef: messagesContainerRef,
     endRef: messagesEndRef,
@@ -115,35 +114,4 @@ function PureMessages({
   );
 }
 
-export const Messages = memo(PureMessages, (prevProps, nextProps) => {
-  // Always re-render if status changes (important for streaming)
-  if (prevProps.status !== nextProps.status) {
-    return false;
-  }
-  
-  // Always re-render if model changes
-  if (prevProps.selectedModelId !== nextProps.selectedModelId) {
-    return false;
-  }
-  
-  // Always re-render if messages change
-  if (prevProps.messages.length !== nextProps.messages.length) {
-    return false;
-  }
-  if (!equal(prevProps.messages, nextProps.messages)) {
-    return false;
-  }
-  
-  // Always re-render if votes change
-  if (!equal(prevProps.votes, nextProps.votes)) {
-    return false;
-  }
-  
-  // Always re-render if artifact visibility changes
-  if (prevProps.isArtifactVisible !== nextProps.isArtifactVisible) {
-    return false;
-  }
-
-  // Only skip re-render if everything is truly the same
-  return true;
-});
+export const Messages = memo(PureMessages);
