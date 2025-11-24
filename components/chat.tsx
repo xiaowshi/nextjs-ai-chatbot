@@ -61,6 +61,7 @@ export function Chat({
   const [input, setInput] = useState<string>("");
   const [usage, setUsage] = useState<AppUsage | undefined>(initialLastContext);
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
+  const [showClearAlert, setShowClearAlert] = useState(false);
   const [currentModelId, setCurrentModelId] = useState(initialChatModel);
   const currentModelIdRef = useRef(currentModelId);
 
@@ -162,6 +163,7 @@ export function Chat({
             chatId={id}
             isReadonly={isReadonly}
             selectedVisibilityType={initialVisibilityType}
+            onClearChat={() => setShowClearAlert(true)}
           />
 
         <Messages
@@ -244,6 +246,33 @@ export function Chat({
               }}
             >
               Activate
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog onOpenChange={setShowClearAlert} open={showClearAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Clear conversation</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. All messages will be permanently deleted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setMessages([]);
+                setInput("");
+                setShowClearAlert(false);
+                toast({
+                  type: "success",
+                  description: "Conversation cleared",
+                });
+              }}
+            >
+              Clear
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
