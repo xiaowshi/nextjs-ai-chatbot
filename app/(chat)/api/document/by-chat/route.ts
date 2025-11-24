@@ -30,4 +30,3 @@ export async function GET(request: Request) {
 
   return Response.json(document, { status: 200 });
 }
-

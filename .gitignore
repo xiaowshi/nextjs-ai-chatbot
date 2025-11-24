@@ -44,3 +44,7 @@ yarn-error.log*
 /playwright/*
 
 docs
+
+
+.npmrc
+package-lock.json

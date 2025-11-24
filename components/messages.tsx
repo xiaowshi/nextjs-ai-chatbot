@@ -31,8 +31,7 @@ function PureMessages({
   setMessages,
   regenerate,
   isReadonly,
-  selectedModelId,
-}: MessagesProps) {
+}: Omit<MessagesProps, 'isArtifactVisible' | 'selectedModelId'>) {
   const {
     containerRef: messagesContainerRef,
     endRef: messagesEndRef,
@@ -117,25 +116,34 @@ function PureMessages({
 }
 
 export const Messages = memo(PureMessages, (prevProps, nextProps) => {
-  if (prevProps.isArtifactVisible && nextProps.isArtifactVisible) {
-    return true;
-  }
-
+  // Always re-render if status changes (important for streaming)
   if (prevProps.status !== nextProps.status) {
     return false;
   }
+  
+  // Always re-render if model changes
   if (prevProps.selectedModelId !== nextProps.selectedModelId) {
     return false;
   }
+  
+  // Always re-render if messages change
   if (prevProps.messages.length !== nextProps.messages.length) {
     return false;
   }
   if (!equal(prevProps.messages, nextProps.messages)) {
     return false;
   }
+  
+  // Always re-render if votes change
   if (!equal(prevProps.votes, nextProps.votes)) {
     return false;
   }
+  
+  // Always re-render if artifact visibility changes
+  if (prevProps.isArtifactVisible !== nextProps.isArtifactVisible) {
+    return false;
+  }
 
-  return false;
+  // Only skip re-render if everything is truly the same
+  return true;
 });
