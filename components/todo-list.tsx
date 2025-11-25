@@ -32,6 +32,16 @@ export function TodoList({
   const todos = useMemo(() => {
     if (!content) return [];
 
+    // 清理markdown格式符号的函数
+    const cleanMarkdown = (text: string): string => {
+      return text
+        .replace(/\*\*/g, "") // 去掉加粗符号 **
+        .replace(/\*/g, "") // 去掉斜体符号 *
+        .replace(/`/g, "") // 去掉代码符号 `
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1") // 去掉链接格式，只保留文本
+        .trim();
+    };
+
     // 解析内容，提取计划项
     // 新格式支持：
     // > ### [习惯名称]
@@ -49,16 +59,16 @@ export function TodoList({
       // 匹配习惯名称：> ### [习惯名称] 或 ### [习惯名称]
       const habitMatch = trimmed.match(/^>\s*###\s*(.+)$/) || trimmed.match(/^###\s*(.+)$/);
       if (habitMatch) {
-        // 提取习惯名称，去掉符号，只保留文字
-        currentHabit = habitMatch[1].trim();
+        // 提取习惯名称，去掉符号和markdown格式，只保留文字
+        currentHabit = cleanMarkdown(habitMatch[1]);
         continue;
       }
 
       // 匹配行动点：> - [具体行动点] 或 - [具体行动点]
       const actionMatch = trimmed.match(/^>\s*-\s*(.+)$/) || trimmed.match(/^-\s*(.+)$/);
       if (actionMatch) {
-        // 提取行动点文字，去掉符号
-        const actionText = actionMatch[1].trim();
+        // 提取行动点文字，去掉符号和markdown格式
+        const actionText = cleanMarkdown(actionMatch[1]);
         if (actionText && actionText.length > 0) {
           // 使用文本内容和行号作为 ID，确保稳定性
           const id = `${currentHabit}-${itemIndex}-${actionText.slice(0, 50)}`;
@@ -83,10 +93,10 @@ export function TodoList({
 
       // 如果没有匹配到行动点格式，但行不为空，可能是多行行动点的一部分
       if (items.length > 0 && !trimmed.match(/^[>#-]/)) {
-        // 追加到上一个项目
+        // 追加到上一个项目，清理markdown格式
         const lastItem = items[items.length - 1];
         if (lastItem) {
-          lastItem.text += " " + trimmed;
+          lastItem.text += " " + cleanMarkdown(trimmed);
         }
       }
     }
