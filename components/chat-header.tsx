@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { memo } from "react";
+import { ListTodo } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { TrashIcon, VoteIcon } from "./icons";
 import type { VisibilityType } from "./visibility-selector";
@@ -24,7 +25,8 @@ function PureChatHeader({
         size="sm"
         variant="outline"
       >
-        📋 待办
+        <ListTodo className="mr-1.5 h-4 w-4" />
+        To-Do List
       </Button>
 
       <Button

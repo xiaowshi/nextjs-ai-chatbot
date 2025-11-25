@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type CelebrationProps = {
@@ -9,19 +9,8 @@ type CelebrationProps = {
 };
 
 export function Celebration({ show, onComplete }: CelebrationProps) {
-  const [particles, setParticles] = useState<Array<{ id: number; x: number; y: number; delay: number }>>([]);
-
   useEffect(() => {
     if (show) {
-      // Generate random particles
-      const newParticles = Array.from({ length: 50 }, (_, i) => ({
-        id: i,
-        x: Math.random() * 100,
-        y: Math.random() * 100,
-        delay: Math.random() * 0.5,
-      }));
-      setParticles(newParticles);
-
       // Auto-hide after animation
       const timer = setTimeout(() => {
         onComplete();
@@ -40,43 +29,6 @@ export function Celebration({ show, onComplete }: CelebrationProps) {
           exit={{ opacity: 0 }}
           className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
         >
-          {/* Confetti particles */}
-          <div className="absolute inset-0 overflow-hidden">
-            {particles.map((particle) => (
-              <motion.div
-                key={particle.id}
-                initial={{
-                  x: `${particle.x}%`,
-                  y: `${particle.y}%`,
-                  scale: 0,
-                  rotate: 0,
-                }}
-                animate={{
-                  scale: [0, 1, 0],
-                  rotate: [0, 360],
-                  y: `${particle.y + 50}%`,
-                  x: `${particle.x + (Math.random() - 0.5) * 20}%`,
-                }}
-                transition={{
-                  duration: 2,
-                  delay: particle.delay,
-                  ease: "easeOut",
-                }}
-                className="absolute w-3 h-3 rounded-full"
-                style={{
-                  backgroundColor: [
-                    "#FF6B6B",
-                    "#4ECDC4",
-                    "#45B7D1",
-                    "#FFA07A",
-                    "#98D8C8",
-                    "#F7DC6F",
-                  ][particle.id % 6],
-                }}
-              />
-            ))}
-          </div>
-
           {/* Celebration text */}
           <motion.div
             initial={{ scale: 0, rotate: -180 }}

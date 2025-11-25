@@ -160,7 +160,7 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
         if (found) {
           const newContent = newLines.join("\n");
           onSaveContent(newContent, false);
-          toast.success("待办事项已完成");
+          // toast.success("待办事项已完成");
         } else {
           toast.error("无法找到要完成的待办事项");
         }
